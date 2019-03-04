@@ -5,6 +5,10 @@ requirements = [
     'cryptography',
 ]
 
+entry_points = [
+    'dodcerts = dodcerts.cli:cli',
+]
+
 setup(
     name='dodcerts',
     version=versioneer.get_version(),
@@ -15,7 +19,7 @@ setup(
     url='https://github.com/erdc/dodcerts',
     packages=['dodcerts'],
     package_data={'dodcerts': ['dod-ca-certs.pem',],},
-    entry_points={},
+    entry_points={'console_scripts': entry_points,},
     install_requires=requirements,
     keywords='dodcerts',
     classifiers=[

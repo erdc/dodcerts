@@ -6,13 +6,13 @@ import tempfile
 import zipfile
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.x509 import Certificate, load_der_x509_certificate
+from cryptography.x509 import load_der_x509_certificate
 from datetime import datetime
 from pathlib import Path
 
 def test_where():
     try:
-        from dodcerts import where
+        from dodcerts.dodcerts import where
     except:
         assert False
     filepath = where()
@@ -35,7 +35,7 @@ def test_where():
 
 def test_describe_cert():
     try:
-        from dodcerts.create import describe_cert
+        from dodcerts.dodcerts.create import describe_cert
     except:
         assert False
     fpath = Path(__file__).parent / 'input' / 'DoDRoot5.cer'
@@ -50,7 +50,7 @@ def test_describe_cert():
 
 def test_download_resources():
     try:
-        from dodcerts.create import download_resources
+        from dodcerts.dodcerts.create import download_resources
     except:
         assert False
     # copy file into certs directory to verify directory clearing
@@ -93,7 +93,7 @@ def test_download_resources():
 
 def test_create_pem_bundle():
     try:
-        from dodcerts.create import create_pem_bundle, download_resources
+        from dodcerts.dodcerts.create import create_pem_bundle, download_resources
     except:
         assert False
 

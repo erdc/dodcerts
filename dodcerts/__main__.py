@@ -1,3 +1,3 @@
-from dodcerts import where
+from dodcerts import where, cli
 
 print(where())
