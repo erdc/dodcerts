@@ -18,7 +18,7 @@ setup(
     author_email='Kevin.D.Winters@erdc.dren.mil',
     url='https://github.com/erdc/dodcerts',
     packages=['dodcerts'],
-    package_data={'dodcerts': ['dod-ca-certs.pem',],},
+    package_data={'dodcerts': ['dod-ca-certs.pem', 'certs'],},
     entry_points={'console_scripts': entry_points,},
     install_requires=requirements,
     keywords='dodcerts',

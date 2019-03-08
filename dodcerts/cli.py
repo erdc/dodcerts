@@ -3,7 +3,7 @@ import sys
 import argparse
 from argparse import _HelpAction
 
-from . import __version__
+from . import __version__, where
 
 def parse_args(args):
     '''Parse command line arguments
@@ -39,4 +39,4 @@ def cli():
         the filepath of the DoD Certificate chain as a PEM bundle
     '''
     parse_args(sys.argv[1:])
-    print(str(dodcerts.where()))
+    print(str(where()))

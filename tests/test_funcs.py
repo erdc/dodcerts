@@ -9,6 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate
 from datetime import datetime
 from pathlib import Path
+from pkg_resources import resource_filename
 
 def test_where():
     try:
@@ -19,6 +20,7 @@ def test_where():
     assert filepath is not None
     filepath = Path(filepath)
     assert filepath.name == 'dod-ca-certs.pem'
+    assert filepath.exists()
     with open(filepath, 'r') as f:
         assert f.readline().find('# Bundle Created: ') == 0
         assert f.readline().find('\n') == 0
@@ -32,6 +34,15 @@ def test_where():
             last = line
             line = f.readline()
         assert last.find('-----END CERTIFICATE-----\n') == 0
+
+    env = os.getenv('DOD_CA_CERTS_PATH', None)
+    os.environ['DOD_CA_CERTS_PEM_PATH'] = 'TEST'
+    filepath = where()
+    assert filepath == 'TEST'
+    if env is not None:
+        os.environ['DOD_CA_CERTS_PEM_PATH'] = env
+    else:
+        os.environ.pop('DOD_CA_CERTS_PEM_PATH')
 
 def test_describe_cert():
     try:
@@ -53,43 +64,35 @@ def test_download_resources():
         from dodcerts.dodcerts.create import download_resources
     except:
         assert False
-    # copy file into certs directory to verify directory clearing
-    fpath = Path(__file__).parent / 'input' / 'DoDRoot5.cer'
-    certs_dir = Path(__file__).parent.parent / 'dodcerts' / 'certs'
-    shutil.copy(fpath, certs_dir)
+    fpath = Path(resource_filename('dodcerts', 'tests/input/DoDRoot5.cer'))
 
-    assert certs_dir.exists()
-    assert certs_dir.is_dir()
-    assert len(os.listdir(certs_dir)) > 0
-
-    download_resources('')
-    assert certs_dir.is_dir()
-    assert certs_dir.exists()
-    assert len(os.listdir(certs_dir)) == 0
-
-    # verify string input and single file
-    download_resources(fpath.as_uri())
-    assert len(os.listdir(certs_dir)) == 1
+    with tempfile.TemporaryDirectory() as resource_dir:
+        # verify string input and single file with specified destination
+        assert len(os.listdir(resource_dir)) == 0
+        assert download_resources(urls=fpath.as_uri(), destination=resource_dir) == resource_dir
+        assert len(os.listdir(resource_dir)) == 1
 
     # verify iterable input
-    download_resources([fpath.as_uri(),])
-    assert len(os.listdir(certs_dir)) == 1
+    resource_dir = download_resources(urls=[fpath.as_uri(),])
+    assert len(os.listdir(resource_dir)) == 1
+    shutil.rmtree(resource_dir)
 
-    #import pdb; pdb.set_trace()
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory() as archive_dir:
         # verify zip file
-        zippath = Path(tmpdir) / 'certs.zip'
+        zippath = Path(archive_dir) / 'certs.zip'
         with zipfile.ZipFile(zippath, 'w') as zip:
             zip.write(fpath)
-        download_resources([zippath.as_uri(),])
-        assert len(os.listdir(certs_dir)) == 1
+        resource_dir = download_resources([zippath.as_uri(),])
+        assert len(os.listdir(resource_dir)) == 1
+        shutil.rmtree(resource_dir)
 
         # verify tar file
-        tarpath = Path(tmpdir) / 'certs.tar'
+        tarpath = Path(archive_dir) / 'certs.tar'
         with tarfile.TarFile(tarpath, 'w') as tar:
             tar.add(fpath)
-        download_resources([tarpath.as_uri(),])
-        assert len(os.listdir(certs_dir)) == 1
+        resource_dir = download_resources([tarpath.as_uri(),])
+        assert len(os.listdir(resource_dir)) == 1
+        shutil.rmtree(resource_dir)
 
 def test_create_pem_bundle():
     try:
@@ -102,9 +105,20 @@ def test_create_pem_bundle():
         fpath = Path(os.path.dirname(__file__)) / 'input' / 'DoDRoot5.cer'
         bundlepath = Path(tmpdir) / 'dod-ca-certs.pem'
 
-        create_pem_bundle(filepath=bundlepath, urls=[fpath.as_uri(),])
+        env = os.environ.get('DOD_CA_CERTS_PEM_PATH', None)
+        if env is not None:
+            os.environ.pop('DOD_CA_CERTS_PEM_PATH')
+
+        create_pem_bundle(destination=bundlepath.as_posix(), urls=[fpath.as_uri(),], set_env_var=False)
         assert bundlepath.exists()
         with open(bundlepath, 'r') as f:
             bundle_dt = datetime.strptime(f.readline(), '# Bundle Created: %Y-%m-%d %H:%M:%S.%f\n')
             span = datetime.now() - bundle_dt
             assert span.total_seconds() < 10.
+        assert os.environ.get('DOD_CA_CERTS_PEM_PATH', None) == None
+
+        res = create_pem_bundle(destination=bundlepath.as_posix(), urls=[fpath.as_uri(),], set_env_var=True)
+        assert os.environ.get('DOD_CA_CERTS_PEM_PATH', None) == res
+
+        if env is not None:
+            os.environ['DOD_CA_CERTS_PEM_PATH'] = env

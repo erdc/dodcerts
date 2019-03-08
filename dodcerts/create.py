@@ -1,9 +1,9 @@
-import os.path
-import shutil
+import os
 import sys
 
 import logging
 import tarfile
+import tempfile
 import zipfile
 
 from cryptography.hazmat.backends import default_backend
@@ -12,8 +12,6 @@ from cryptography.x509 import Certificate, load_der_x509_certificate, load_pem_x
 from cryptography.x509.name import NameOID
 from datetime import datetime
 from urllib.request import urlopen
-
-from .bundle import where
 
 log = logging.getLogger('dod-certs')
 ch = logging.StreamHandler(sys.stdout)
@@ -24,7 +22,7 @@ ch.setFormatter(formatter)
 # add the handlers to the logger
 log.addHandler(ch)
 
-certs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'certs')
+cert_exts = ['cer', 'crt', 'pem']
 
 def describe_cert(cert):
     """extract and format certification information as comment
@@ -34,7 +32,7 @@ def describe_cert(cert):
             a x509 formatted certificate to process
 
     Returns:
-        a string that contains the certification information
+        certification information as a string
     """
     assert isinstance(cert, Certificate)
     info = (
@@ -53,34 +51,37 @@ def describe_cert(cert):
     return info
 
 
-def download_resources(urls):
+def download_resources(urls, destination=None):
     """retrieve, place, and extract resources from archive (if necessary) into `certs` directory
 
     Args:
         urls(iterable, required):
-            an iterable of urls (e.g. https://militarycac.org/maccerts/AllCerts.zip) as strings
-    """
+            iterable of urls (e.g. https://militarycac.org/maccerts/AllCerts.zip) as strings
+        destination(string, optional, default=None):
+            location to which resources are downloaded; defaulted to a new temporary directory that must then be managed
+            by the calling process
 
-    # clear the certs directory
-    if os.path.exists(certs_dir):
-        assert os.path.isdir(certs_dir)
-        if len(os.listdir(certs_dir)) > 0:
-            shutil.rmtree(certs_dir)
-    if not os.path.exists(certs_dir):
-        os.mkdir(certs_dir)
+    Returns:
+        path to the downloaded resources as a string
+    """
+    if destination is None:
+        destination = tempfile.mkdtemp(prefix='certs_')
+        log.info('Created temporary directory')
+    if not os.path.exists(destination):
+        os.mkdir(destination)
+    assert os.path.isdir(destination)
 
     if isinstance(urls, str):
         urls = [urls, ]
 
     # process the resources
-    cert_exts = ['cer', 'crt', 'pem']
     for url in urls:
         assert isinstance(url, str)
         if not url:
             continue
         log.info('Downloading resource: {}'.format(url))
         response = urlopen(url)
-        fpath = os.path.join(certs_dir, os.path.basename(url))
+        fpath = os.path.join(destination, os.path.basename(url))
         with open(fpath, 'wb') as f:
             f.write(response.read())
         log.info('Resource written to: {}'.format(fpath))
@@ -91,7 +92,7 @@ def download_resources(urls):
                     tar = tarfile.open(mode='r:*', fileobj=f)
                     for file in tar:
                         if any([file.name.endswith(ext) for ext in cert_exts]):
-                            tar.extract(member=file, path=certs_dir)
+                            tar.extract(member=file, path=destination)
                     tar.close()
                 except tarfile.TarError as e:
                     log.warning('Unable to extract resource: {}'.format(fpath))
@@ -103,49 +104,72 @@ def download_resources(urls):
                 for file in zip.filelist:
                     if any([file.filename.endswith(ext) for ext in cert_exts]):
                         zip.filename = os.path.basename(zip.filename)
-                        zip.extract(member=file, path=certs_dir)
+                        zip.extract(member=file, path=destination)
                 zip.close()
                 os.remove(fpath)
                 log.info('Extracted zip and removed: {}'.format(fpath))
             except tarfile.TarError as e:
                 log.warning('Unable to extract resource: {}'.format(fpath))
+    return destination
 
 
-def create_pem_bundle(urls=None, filepath=None):
-    """create a PEM formatted certificate bundle from the resources in the `certs` directory
+def create_pem_bundle(destination, urls=None, resource_dir=None, set_env_var=True):
+    """create a PEM formatted certificate bundle from the specified resources
 
     Args:
+        destination(str, required):
+            pathname for created pem bundle file
         urls(iterable, optional, default=None):
-            passed to `download_resources` if specified, else use contents of `certs` directory
-        filepath(str, optional, default=None):
-            location of newly created pem bundle file; defaulted to `where` location
+            passed to `download_resources` if specified, else the existing contents of `resource_dir` are processed;
+            `urls` and/or `resource_dir` must be specified
+        resource_dir(str, optional, default=None):
+            location of resources to process; passed to `download_resources` along with `urls` if both specified, else
+            a temporary location is utilized
+        set_env_var(bool, optional, default=True):
+            determines whether the `DOD_CA_CERTS_PEM_PATH` environmental variable is set with the value of created pem
+            bundle pathname
+
+    Returns:
+        pathname of created pem bundle file
     """
-    filepath = filepath or where()
+    if resource_dir is not None:
+        assert os.exists(resource_dir)
+        assert os.is_dir(resource_dir)
+    else:
+        assert urls is not None  # `urls` or `resource_dir` must be specified
+
     if urls is not None:
-        download_resources(urls)
+        resource_dir = download_resources(urls, resource_dir)
 
     # create empty bytes stream
     pem_bundle = "# Bundle Created: {} \n".format(datetime.now()).encode()
     # get file list
-    files = sorted(os.listdir(certs_dir))
+    files = sorted(os.listdir(resource_dir))
     # process CAs first then Roots
     for type in ['ca', 'root']:
         for file in files:
-            fpath = os.path.join(certs_dir, file)
-            if file.lower().find(type) > -1 and os.path.isfile(fpath):
-                with open(fpath, 'rb') as f:
-                    contents = f.read()
-                    try:
-                        cert = load_der_x509_certificate(contents, backend=default_backend())
-                    except ValueError:
+            if any([file.endswith(ext) for ext in cert_exts]):
+                fpath = os.path.join(resource_dir, file)
+                if file.lower().find(type) > -1 and os.path.isfile(fpath):
+                    with open(fpath, 'rb') as f:
+                        contents = f.read()
                         try:
-                            cert = load_pem_x509_certificate(contents, backend=default_backend())
+                            cert = load_der_x509_certificate(contents, backend=default_backend())
                         except ValueError:
-                            log.warning('Unable to load public key from: {}'.format(file))
-                            continue
-                    # add cert's info and public key in PEM format to the bytes stream
-                    pem_bundle += describe_cert(cert).encode()
-                    pem_bundle += cert.public_bytes(Encoding.PEM)
+                            try:
+                                cert = load_pem_x509_certificate(contents, backend=default_backend())
+                            except ValueError:
+                                log.warning('Unable to load public key from: {}'.format(file))
+                                continue
+                        # add cert's info and public key in PEM format to the bytes stream
+                        pem_bundle += describe_cert(cert).encode()
+                        pem_bundle += cert.public_bytes(Encoding.PEM)
 
-    with open(filepath, 'wb') as f:
+    with open(destination, 'wb') as f:
         f.write(pem_bundle)
+
+    if set_env_var:
+        os.environ['DOD_CA_CERTS_PEM_PATH'] = destination
+        log.info('Set DOD_CA_CERTS_PEM_PATH environment variable')
+
+    return destination
