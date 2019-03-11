@@ -164,7 +164,7 @@ def create_pem_bundle(destination, urls=None, resource_dir=None, set_env_var=Tru
                         # add cert's info and public key in PEM format to the bytes stream
                         pem_bundle += describe_cert(cert).encode()
                         pem_bundle += cert.public_bytes(Encoding.PEM)
-
+    destination = os.path.abspath(destination)
     with open(destination, 'wb') as f:
         f.write(pem_bundle)
 
