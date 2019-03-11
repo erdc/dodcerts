@@ -1,4 +1,5 @@
 import pytest
+import re
 import sys
 
 from argparse import ArgumentError
@@ -8,7 +9,7 @@ from unittest import mock
 from dodcerts.dodcerts import __version__
 
 help_msg = [
-    'usage: pytest [-h] [-V]\n',
+    'usage: .* \[-h\] \[-V\]\n',
     '\n',
     'dodcerts is a tool that provides the DoD Certificate chain as a PEM bundle.\n',
     'Returns path to file.\n',
@@ -21,7 +22,7 @@ help_msg = [
 ver_msg = ['dodcerts ' + __version__]
 
 unrec_msg = [
-    'usage: pytest [-h] [-V]\n',
+    'usage: .* \[-h\] \[-V\]\n',
     'pytest: error: unrecognized arguments: bad_input\n',
 ]
 
@@ -47,8 +48,6 @@ def test_parser(arg, output):
 
     # compare output
     for l in output:
-        str = res.readline()
-        assert str == l
-        #assert res.readline().find(l) == 0
+        assert re.match(l, res.readline()) != None
     # check for end of output
     assert res.readline() == ''
