@@ -47,6 +47,8 @@ def test_parser(arg, output):
 
     # compare output
     for l in output:
-        assert res.readline().find(l) == 0
+        str = res.readline()
+        assert str == l
+        #assert res.readline().find(l) == 0
     # check for end of output
     assert res.readline() == ''
