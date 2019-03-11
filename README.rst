@@ -3,9 +3,17 @@ dodcerts
 ===============================
 
 .. image:: https://travis-ci.com/erdc/dodcerts.svg?branch=master
+    :target: https://travis-ci.com/erdc/dodcerts
+    :alt: See Build Status on Travis CI
 .. image:: https://ci.appveyor.com/api/projects/status/058qfkppjlbgxqjh/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/kajiglet/dodcerts
+    :alt: See Build Status on AppVeyor
+.. image:: https://circleci.com/gh/erdc/dodcerts.svg?style=svg
+    :target: https://circleci.com/gh/erdc/dodcerts
+    :alt: See Build Status on CircleCI
 .. image:: https://codecov.io/gh/erdc/dodcerts/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/erdc/dodcerts
+    :target: https://codecov.io/gh/erdc/dodcerts
+    :alt: See Coverage Status on Codecov
 
 DoD Certificate chain
 
