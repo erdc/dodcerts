@@ -6,7 +6,7 @@ from argparse import ArgumentError
 from io import StringIO
 from unittest import mock
 
-from dodcerts.dodcerts import __version__
+from dodcerts import __version__
 
 help_msg = [
     r'usage: .* \[-h\] \[-V\]\n',
@@ -29,7 +29,7 @@ ver_msg = ['dodcerts ' + __version__]
 ])
 def test_parser(arg, output, regex):
     try:
-        from dodcerts.dodcerts.cli import parse_args
+        from dodcerts.cli import parse_args
     except:
         assert False
 

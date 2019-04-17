@@ -9,11 +9,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate
 from datetime import datetime
 from pathlib import Path
-from pkg_resources import resource_filename
 
 def test_where():
     try:
-        from dodcerts.dodcerts import where
+        from dodcerts import where
     except:
         assert False
     filepath = where()
@@ -46,7 +45,7 @@ def test_where():
 
 def test_describe_cert():
     try:
-        from dodcerts.dodcerts.create import describe_cert
+        from dodcerts.create import describe_cert
     except:
         assert False
     fpath = Path(__file__).parent / 'input' / 'DoDRoot5.cer'
@@ -61,15 +60,15 @@ def test_describe_cert():
 
 def test_download_resources():
     try:
-        from dodcerts.dodcerts.create import download_resources
+        from dodcerts.create import download_resources
     except:
         assert False
-    fpath = Path(resource_filename('dodcerts', 'tests/input/DoDRoot5.cer'))
+    fpath = Path(__file__).parent / 'input' / 'DoDRoot5.cer'
 
     with tempfile.TemporaryDirectory() as resource_dir:
         # verify string input and single file with specified destination
         assert len(os.listdir(resource_dir)) == 0
-        assert download_resources(urls=fpath.as_uri(), destination=resource_dir) == resource_dir
+        assert download_resources(urls=fpath.resolve().as_uri(), destination=resource_dir) == resource_dir
         assert len(os.listdir(resource_dir)) == 1
 
     # verify iterable input
@@ -96,7 +95,7 @@ def test_download_resources():
 
 def test_create_pem_bundle():
     try:
-        from dodcerts.dodcerts.create import create_pem_bundle, download_resources
+        from dodcerts.create import create_pem_bundle, download_resources
     except:
         assert False
 
