@@ -14,6 +14,8 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="DoD Certificate Chain",
+    long_description=open('README.rst', 'r').read(),
+    long_description_content_type='text/x-rst',
     author="Kevin Winters",
     author_email='Kevin.D.Winters@erdc.dren.mil',
     url='https://github.com/erdc/dodcerts',
