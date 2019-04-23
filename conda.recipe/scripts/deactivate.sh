@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Restore previous REQUESTS_CA_BUNDLE env var
+
+unset REQUESTS_CA_BUNDLE
+if [[ -n "$_CONDA_SET_REQUESTS_CA_BUNDLE" ]]; then
+    export REQUESTS_CA_BUNDLE=$_CONDA_SET_REQUESTS_CA_BUNDLE
+    unset _CONDA_SET_REQUESTS_CA_BUNDLE
+fi
