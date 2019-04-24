@@ -22,9 +22,10 @@ after_success:
   - conda install -c conda-forge codecov
   - codecov
 after_script:
-  - openssl aes-256-cbc -pbkdf2 -k "$password" -d -a -in update/deploy_key.enc -out ~/.ssh/deploy_key
-  - echo -e "Host github.com\n  IdentityFile ~/.ssh/deploy_key" > ~/.ssh/config
-  - echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" > ~/.ssh/known_hosts
-  - ./update/update.sh
+  if: env(TRAVIS_PYTHON_VERSION) = '2.6'
+    - openssl aes-256-cbc -pbkdf2 -k "$password" -d -a -in update/deploy_key.enc -out ~/.ssh/deploy_key
+    - echo -e "Host github.com\n  IdentityFile ~/.ssh/deploy_key" > ~/.ssh/config
+    - echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" > ~/.ssh/known_hosts
+    - ./update/update.sh
 dd:
   secure: lLArYKYlhlgnDxXoh0ieYTC9mTcMA8Dkochcwjb6xNCfvveu63UNt6hbn9/PxOTJQkVYjywl7no+D+r83qHarrDREcrDV6KWNoK6vEs8aymmhl5PIl+OwrY4Lvg9pyKWZHemW+HYvK+MZDc2zU67LmpLlIwJxNLpjSQ/p/2/3IUnZuWTBEhzjxFnPtfmpej4YJ9f+WdzTJ8bQYoEtyJY2x4evw2KcSLTgbw/CKriRBGRr1KJ6B+ztFBvvER7qfUQVXJ+ZJvC/7XiLkkCwZgzPGjtUi0xmEAmHB1lcI5phnCR+ah1OcYeT2Sux1H7NkzlcLU/r7HEVIVOWLmZN6tJJmwFbG9KB8X/Q+w7vHtZAfWTb76eB46UCQU0z7kGiZu5ChCF4r/Jf9R60owd8tCcqXZ9qfGLVvM/WPiXdHXMRHoE6J5g9ZUk/2gW4u1xLdOVJIi71qNL/yFuL2knC5uwf1i2fuasRI2Gy7rfj6YdUrkgVGsTAyDVH711RMXV0iugTwU3Aaqu1UXKlBJkMo21dLd6CGSffRcejkcWYjheQlZnoQkIPTJB56FO7ojGnTl9wVAgbSiroQpNrBICGEj5k5YNIsdYTda3kb60XqxafOIJ2+0Jh0RpRxbNG8x+BRYQlFmYnrGiDmnntn+fUdyyeQhfFEvJNR8G276aF0Fm1bY=
