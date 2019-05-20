@@ -2,6 +2,7 @@
 
 python setup.py install --single-version-externally-managed --record=record.txt
 
+goto end
 @REM Add activate/deactivate scripts
 
 set ACTIVATE_DIR=%PREFIX%\etc\conda\activate.d
@@ -22,3 +23,5 @@ if errorlevel 1 exit 1
 
 copy %RECIPE_DIR%\scripts\deactivate.sh %DEACTIVATE_DIR%\dodcerts-deactivate.sh
 if errorlevel 1 exit 1
+
+:end
