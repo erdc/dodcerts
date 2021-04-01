@@ -26,6 +26,8 @@ jobs:
             conda info -a
             conda build conda.recipe --no-test
             conda install --use-local dodcerts
+            echo $CONDA_PREFIX
+            conda list
 
       
       # - save_cache:
@@ -38,6 +40,7 @@ jobs:
           name: run tests
           command: |
             # source activate adj
+            echo $CONDA_PREFIX
             pytest --color=yes -v --cov=dodcerts tests
             conda install -c conda-forge codecov
             codecov
