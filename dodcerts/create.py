@@ -101,12 +101,12 @@ def download_resources(urls, destination=None):
             log.info('Extracted archive and removed: {}'.format(fpath))
         elif zipfile.is_zipfile(fpath):
             try:
-                zip = zipfile.ZipFile(fpath)
-                for file in zip.filelist:
+                this_zip = zipfile.ZipFile(fpath)
+                for file in this_zip.filelist:
                     if any([file.filename.endswith(ext) for ext in cert_exts]):
-                        zip.filename = os.path.basename(zip.filename)
-                        zip.extract(member=file, path=destination)
-                zip.close()
+                        this_zip.filename = os.path.basename(this_zip.filename)
+                        this_zip.extract(member=file, path=destination)
+                this_zip.close()
                 os.remove(fpath)
                 log.info('Extracted zip and removed: {}'.format(fpath))
             except tarfile.TarError as e:
@@ -147,11 +147,11 @@ def create_pem_bundle(destination, urls=None, resource_dir=None, set_env_var=Tru
     # get file list
     files = sorted(os.listdir(resource_dir))
     # process CAs first then Roots
-    for type in ['ca', 'root']:
+    for cert_type in ['ca', 'root']:
         for file in files:
             if any([file.endswith(ext) for ext in cert_exts]):
                 fpath = os.path.join(resource_dir, file)
-                if file.lower().find(type) > -1 and os.path.isfile(fpath):
+                if file.lower().find(cert_type) > -1 and os.path.isfile(fpath):
                     with open(fpath, 'rb') as f:
                         contents = f.read()
                         try:
