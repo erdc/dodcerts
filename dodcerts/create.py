@@ -24,6 +24,7 @@ log.addHandler(ch)
 
 cert_exts = ['cer', 'crt', 'pem']
 
+
 def describe_cert(cert):
     """extract and format certification information as comment
 
@@ -45,7 +46,7 @@ def describe_cert(cert):
         cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
         *[cert.issuer.get_attributes_for_oid(oid)[0].value
           for oid in [NameOID.ORGANIZATION_NAME, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.COMMON_NAME]],
-        cert.not_valid_after,
+        cert.not_valid_after_utc,
     )
 
     return info
