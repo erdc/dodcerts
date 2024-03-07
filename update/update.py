@@ -7,29 +7,31 @@ from dodcerts.create import create_pem_bundle
 
 # certificate resources to bundle
 urls = ['https://militarycac.org/maccerts/AllCerts.zip',]
-dir = pathlib.Path(__file__).parent
+this_dir = pathlib.Path(__file__).parent
 
 # create new bundle and hash
-bundlepath = create_pem_bundle(destination=(dir / 'my_bundle.pem').as_posix(), urls=urls)
-hash = hashlib.sha256()
-with open(bundlepath, 'r') as file:
+bundle_path = create_pem_bundle(destination=(this_dir / 'my_bundle.pem').as_posix(), urls=urls)
+new_bundle_hash = hashlib.sha256()
+with open(bundle_path, 'r') as file:
     # skip timestamp line
     file.readline()
-    for l in file.readlines():
-        hash.update(l.encode())
-newsignature = hash.hexdigest()
-print(newsignature)
+    for line in file.readlines():
+        new_bundle_hash.update(line.encode())
+new_signature = new_bundle_hash.hexdigest()
+print(new_signature)
+
 # get old hash
-hashpath = (dir / 'dod-ca-certs.hash').as_posix()
-with open(hashpath, 'r') as file:
-    oldsignature = file.read()
-print(oldsignature)
+hash_path = (this_dir / 'dod-ca-certs.hash').as_posix()
+with open(hash_path, 'r') as file:
+    old_signature = file.read()
+print(old_signature)
+
 # compare hashes
-if newsignature != oldsignature:
+if new_signature != old_signature:
     # overwrite existing bundle and hash
-    with open(hashpath, 'w') as file:
-        file.write(newsignature)
-        shutil.move(bundlepath, (dir / '..' / 'dodcerts' / 'dod-ca-certs.pem').as_posix())
+    with open(hash_path, 'w') as file:
+        file.write(new_signature)
+        shutil.move(bundle_path, (this_dir / '..' / 'dodcerts' / 'dod-ca-certs.pem').as_posix())
     print('update')
     exit(0)
 else:
