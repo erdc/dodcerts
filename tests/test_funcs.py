@@ -10,6 +10,7 @@ from cryptography.x509 import load_der_x509_certificate
 from datetime import datetime
 from pathlib import Path
 
+
 def test_where():
     try:
         from dodcerts import where
@@ -28,10 +29,8 @@ def test_where():
         assert f.readline().find('# Signed with: ') == 0
         assert f.readline().find('# Expires: ') == 0
         assert f.readline().find('-----BEGIN CERTIFICATE-----\n') == 0
-        line = f.readline()
-        while line is not '':
+        for line in f.readlines():
             last = line
-            line = f.readline()
         assert last.find('-----END CERTIFICATE-----\n') == 0
 
     env = os.getenv('DOD_CA_CERTS_PATH', None)
@@ -42,6 +41,7 @@ def test_where():
         os.environ['DOD_CA_CERTS_PEM_PATH'] = env
     else:
         os.environ.pop('DOD_CA_CERTS_PEM_PATH')
+
 
 def test_describe_cert():
     try:
@@ -56,7 +56,8 @@ def test_describe_cert():
                       '# Subject: DoD Root CA 5\n' \
                       '# Issued by: U.S. Government DoD\n' \
                       '# Signed with: DoD Root CA 5\n' \
-                      '# Expires: 2041-06-14 17:17:27\n'
+                      '# Expires: 2041-06-14 17:17:27+00:00\n'
+
 
 def test_download_resources():
     try:
@@ -89,9 +90,10 @@ def test_download_resources():
         tarpath = Path(archive_dir) / 'certs.tar'
         with tarfile.TarFile(tarpath, 'w') as tar:
             tar.add(fpath)
-        resource_dir = download_resources([tarpath.as_uri(),])
+        resource_dir = download_resources([tarpath.as_uri()])
         assert len(os.listdir(resource_dir)) == 1
         shutil.rmtree(resource_dir)
+
 
 def test_create_pem_bundle():
     try:
@@ -114,7 +116,7 @@ def test_create_pem_bundle():
             bundle_dt = datetime.strptime(f.readline(), '# Bundle Created: %Y-%m-%d %H:%M:%S.%f\n')
             span = datetime.now() - bundle_dt
             assert span.total_seconds() < 10.
-        assert os.environ.get('DOD_CA_CERTS_PEM_PATH', None) == None
+        assert os.environ.get('DOD_CA_CERTS_PEM_PATH', None) is None
 
         res = create_pem_bundle(destination=bundlepath.as_posix(), urls=[fpath.as_uri(),], set_env_var=True)
         assert os.environ.get('DOD_CA_CERTS_PEM_PATH', None) == res
